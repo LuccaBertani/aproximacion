@@ -6,8 +6,18 @@
 
 using namespace std;
 
+struct sumatorias{
+double sumX;
+double sumY;
+double sumXY;
+double sumX2;
+};
+
 // Función para calcular coeficientes de mínimos cuadrados lineales (y = m*x + b)
-void calcularRectaMinimosCuadrados(const vector<double>& x, const vector<double>& y, double& m, double& b) {
+sumatorias* calcularRectaMinimosCuadrados(const vector<double>& x, const vector<double>& y, double& m, double& b) {
+    
+    sumatorias* valores = new sumatorias;
+
     int n = x.size();
     double sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
 
@@ -18,15 +28,22 @@ void calcularRectaMinimosCuadrados(const vector<double>& x, const vector<double>
         sumX2 += x[i] * x[i];
     }
 
+    valores->sumX = sumX;
+    valores->sumY = sumY;
+    valores->sumXY = sumXY;
+    valores->sumX2 = sumX2;
+
     double denom = n * sumX2 - sumX * sumX;
     if (denom == 0) {
         cerr << "Error: división por cero en cálculo de mínimos cuadrados." << endl;
         m = 0;
         b = 0;
-        return;
+        return NULL;
     }
     m = (n * sumXY - sumX * sumY) / denom;
     b = (sumY - m * sumX) / n;
+
+    return valores;
 }
 
 // Calcula ECM y R^2 para modelo dado (x, y) y función predicha f(x)
@@ -103,7 +120,7 @@ int main(int argc, char* argv[]) {
 
     // --- Modelo lineal ---
     double m_lin, b_lin;
-    calcularRectaMinimosCuadrados(horas, calificaciones, m_lin, b_lin);
+    sumatorias* valores = calcularRectaMinimosCuadrados(horas, calificaciones, m_lin, b_lin);
 
     vector<double> y_pred_lineal;
     for (double x : horas) y_pred_lineal.push_back(m_lin * x + b_lin);
@@ -112,6 +129,7 @@ int main(int argc, char* argv[]) {
     calcularErrorYCoefR2(calificaciones, y_pred_lineal, ecm_lin, r2_lin);
 
     cout << "Modelo Lineal: y = " << m_lin << " * x + " << b_lin << endl;
+    cout << "SUM_X: " << valores->sumX << " SUM_Y: " << valores->sumY << " SUM_XY: " << valores->sumXY << " SUM_X2: " << valores->sumX2 << endl; 
     cout << "ECM Lineal: " << ecm_lin << ", R^2 Lineal: " << r2_lin << endl << endl;
 
     // --- Modelo exponencial: y = a * exp(b * x)
@@ -131,7 +149,7 @@ int main(int argc, char* argv[]) {
         cerr << "No hay suficientes datos válidos para ajuste exponencial." << endl;
     } else {
         double m_exp, b_exp;
-        calcularRectaMinimosCuadrados(x_exp, ln_y, b_exp, m_exp); // Nota: m_exp es intercepto ln(a), b_exp es pendiente b
+        valores = calcularRectaMinimosCuadrados(x_exp, ln_y, b_exp, m_exp); // Nota: m_exp es intercepto ln(a), b_exp es pendiente b
 
         double a_exp = exp(m_exp);
 
@@ -144,6 +162,7 @@ int main(int argc, char* argv[]) {
         calcularErrorYCoefR2(calificaciones, y_pred_exp, ecm_exp, r2_exp);
 
         cout << "Modelo Exponencial: y = " << a_exp << " * exp(" << b_exp << " * x)" << endl;
+        cout << "SUM_X: " << valores->sumX << " SUM_Y: " << valores->sumY << " SUM_XY: " << valores->sumXY << " SUM_X2: " << valores->sumX2 << endl; 
         cout << "ECM Exponencial: " << ecm_exp << ", R^2 Exponencial: " << r2_exp << endl << endl;
     }
 
@@ -153,7 +172,7 @@ int main(int argc, char* argv[]) {
     vector<double> y_log;
     for (int i = 0; i < (int)horas.size(); ++i) {
         if (horas[i] <= 0) {
-            cerr << "Datos no válidos para logaritmo (x <= 0) en índice " << i << ", se omite." << endl;
+            cerr << "Datos no validos para logaritmo (x <= 0) en indice " << i << ", se omite." << endl;
             continue;
         }
         ln_x.push_back(log(horas[i]));
@@ -164,7 +183,7 @@ int main(int argc, char* argv[]) {
         cerr << "No hay suficientes datos válidos para ajuste logarítmico." << endl;
     } else {
         double m_log, b_log;
-       calcularRectaMinimosCuadrados(ln_x, y_log, m_log, b_log); // b_log es intercepto a, m_log es pendiente b
+       valores = calcularRectaMinimosCuadrados(ln_x, y_log, m_log, b_log); // b_log es intercepto a, m_log es pendiente b
 
         vector<double> y_pred_log;
         for (double x : horas) {
@@ -178,8 +197,9 @@ int main(int argc, char* argv[]) {
         double ecm_log, r2_log;
         calcularErrorYCoefR2(calificaciones, y_pred_log, ecm_log, r2_log);
 
-        cout << "Modelo Logarítmico: y = " << b_log << " + " << m_log << " * ln(x)" << endl;
-        cout << "ECM Logarítmico: " << ecm_log << ", R^2 Logarítmico: " << r2_log << endl << endl;
+        cout << "Modelo Logaritmico: y = " << b_log << " + " << m_log << " * ln(x)" << endl;
+        cout << "SUM_X: " << valores->sumX << " SUM_Y: " << valores->sumY << " SUM_XY: " << valores->sumXY << " SUM_X2: " << valores->sumX2 << endl; 
+        cout << "ECM Logaritmico: " << ecm_log << ", R^2 Logaritmico: " << r2_log << endl << endl;
     }
 
     return 0;
